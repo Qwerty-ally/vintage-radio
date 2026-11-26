@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en" data-station="vintage">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vintage Radio</title>
+<meta name="description" content="Finn Shapiro radio. Everyone hears the same song at the same time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Anton&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* each song's colors (set from its cover); registered so they fade smoothly */
+@property --song-accent{syntax:"<color>";inherits:true;initial-value:#8e2a2a}
+@property --song-glow{syntax:"<color>";inherits:true;initial-value:#f6c66b}
+@property --song-tint{syntax:"<color>";inherits:true;initial-value:#ebe1c9}
+:root{transition:--song-accent 1.4s ease,--song-glow 1.4s ease,--song-tint 1.4s ease}
+/* =====================================================================
+   VINTAGE (until the switch)
+   ===================================================================== */
+:root{
+  --ground:#ebe1c9; --ink:#1f1813; --muted:#75614b; --accent:var(--song-accent);
+  --kraft:#c9ad84; --line:#b9a47f;
+  --type:"Special Elite","Courier New",monospace;
+  --serif:"Playfair Display",Georgia,serif;
+  /* the radio */
+  --wood:linear-gradient(90deg,#4a2810 0%,#7d4a22 14%,#9a5e2e 30%,#77441e 50%,#93592b 72%,#6e3e1a 88%,#45250e 100%);
+  --grain:repeating-linear-gradient(92deg,rgba(0,0,0,.09) 0 2px,transparent 2px 7px,rgba(255,220,170,.05) 7px 8px,transparent 8px 15px);
+  --trim:#c9a45c; --trim-dark:#7a5a24;
+  --cloth:#b89a6c; --cloth-dark:#8d7149;
+  --glass-off:#3b2a17; --glass-on:var(--song-glow); --glass-ink:#3a1d08; --needle:#b3241b;
+  --meter-face:#f1e6c8;
+  color-scheme:light;
+}
+/* =====================================================================
+   PK (after the switch)
+   ===================================================================== */
+:root[data-station="pk"]{
+  --ground:#09080a; --ink:#f2ecf0; --muted:#8c8390; --accent:#ff3fae;
+  --kraft:#2c272f; --line:#2c272f;
+  --type:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --serif:"Anton","Impact",sans-serif;
+  --wood:linear-gradient(90deg,#0b0a0c,#1d1a20 30%,#141216 60%,#09080a);
+  --grain:linear-gradient(180deg,rgba(255,255,255,.06),transparent 40%);
+  --trim:#ff3fae; --trim-dark:#8a1f5d;
+  --cloth:#1b181d; --cloth-dark:#0d0b0e;
+  --glass-off:#1a1219; --glass-on:#ff3fae; --glass-ink:#0a0a0a; --needle:#f2ecf0;
+  --meter-face:#151216;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{min-height:100vh;color:var(--ink);font:16px/1.55 var(--type);background:var(--ground);overflow-x:hidden;transition:background .8s,color .8s}
+:root[data-station="vintage"] body{
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 22%,color-mix(in srgb,var(--song-tint) 55%,transparent),transparent 75%),
+    radial-gradient(ellipse at 50% 30%,rgba(255,250,232,.55),transparent 60%),
+    radial-gradient(ellipse at 100% 100%,rgba(120,80,35,.28),transparent 55%),
+    radial-gradient(ellipse at 0% 100%,rgba(120,80,35,.2),transparent 50%),
+    var(--ground);
+}
+/* film grain + vignette over everything */
+.grain{position:fixed;inset:-50%;pointer-events:none;z-index:50;opacity:.16;mix-blend-mode:multiply;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .2 0 0 0 0 .1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1.2s steps(6) infinite}
+@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}}
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:49;box-shadow:inset 0 0 160px rgba(70,40,10,.35)}
+[data-station="pk"] .grain{mix-blend-mode:screen;opacity:.06}
+[data-station="pk"] .vignette{box-shadow:inset 0 0 200px rgba(255,63,174,.12)}
+
+/* collage cut-outs from the album cover */
+.collage{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.collage img{position:absolute;mix-blend-mode:multiply;filter:drop-shadow(0 6px 8px rgba(60,35,10,.25))}
+.c-notes{width:min(380px,44vw);top:18px;left:-30px;transform:rotate(-6deg)}
+.c-news{width:min(260px,34vw);top:-20px;right:-30px;transform:rotate(4deg)}
+.c-rose{width:min(250px,34vw);top:600px;left:-70px;transform:rotate(-10deg)}
+.c-rose2{width:min(210px,30vw);top:1180px;right:-60px;transform:rotate(168deg)}
+[data-station="pk"] .collage{display:none}
+
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 16px 72px}
+
+/* ---------- masthead ---------- */
+.top{display:flex;justify-content:flex-end;padding:18px 0 0}
+.lamp{display:inline-flex;align-items:center;gap:9px;padding:7px 14px;background:rgba(255,250,235,.6);border:1.5px solid var(--ink);border-radius:999px;font:13px var(--type);letter-spacing:.16em;text-transform:uppercase;opacity:.6;transition:all .3s}
+.lamp i{width:10px;height:10px;border-radius:50%;background:#8a7a68}
+.lamp.on{opacity:1;border-color:var(--accent);color:var(--accent)}
+.lamp.on i{background:var(--accent);box-shadow:0 0 12px 3px var(--accent);animation:pulse 1.6s ease-in-out infinite}
+[data-station="pk"] .lamp{background:transparent;border-radius:0}
+[data-station="pk"] .lamp.on i{background:var(--accent);box-shadow:0 0 12px 3px var(--accent)}
+@keyframes pulse{50%{opacity:.4}}
+
+.mast{text-align:center;padding:64px 0 40px}
+.presents{font:italic 400 19px var(--serif);color:var(--muted)}
+.logo{margin:4px 0 0;line-height:.85;font-weight:400}
+.logo .big{display:block;font:400 clamp(72px,17vw,156px)/.9 var(--type);letter-spacing:.01em}
+.logo .script{display:inline-block;margin-top:-.1em;font:italic 700 clamp(40px,8vw,72px)/1 var(--serif);color:var(--accent);transform:rotate(-4deg)}
+[data-station="pk"] .logo .big{font-family:"Anton",Impact,sans-serif;text-transform:uppercase;color:var(--accent)}
+[data-station="pk"] .logo .script{font:400 clamp(32px,6vw,52px)/1 "Anton",Impact,sans-serif;color:var(--ink);text-transform:uppercase;letter-spacing:.2em;transform:none}
+.tagline{max-width:44ch;margin:20px auto 0;color:var(--muted)}
+
+/* =====================================================================
+   THE RADIO
+   ===================================================================== */
+.radio{
+  position:relative;max-width:640px;margin:0 auto;padding:28px 28px 30px;
+  border-radius:300px 300px 26px 26px / 220px 220px 26px 26px;
+  background:var(--grain),var(--wood);
+  box-shadow:
+    inset 0 2px 0 rgba(255,220,170,.35), inset 0 -6px 14px rgba(0,0,0,.45),
+    inset 0 0 0 8px rgba(0,0,0,.12),
+    0 40px 60px -30px rgba(40,20,5,.8), 0 14px 22px -10px rgba(40,20,5,.5);
+}
+[data-station="pk"] .radio{box-shadow:inset 0 0 0 2px #2c272f,0 0 0 1px #ff3fae,10px 10px 0 0 #ff3fae}
+.feet{display:flex;justify-content:space-between;max-width:520px;margin:-2px auto 0;padding:0 20px}
+.feet i{width:70px;height:14px;background:#2a170a;border-radius:0 0 10px 10px}
+[data-station="pk"] .feet i{background:#ff3fae;border-radius:0}
+
+/* arched speaker grille with the cover in the middle */
+.grille{
+  position:relative;height:clamp(200px,40vw,270px);
+  border-radius:260px 260px 10px 10px / 200px 200px 10px 10px;
+  border:5px solid var(--trim);box-shadow:inset 0 0 0 2px var(--trim-dark),inset 0 8px 24px rgba(0,0,0,.45);
+  background:
+    repeating-linear-gradient(90deg,transparent 0 22px,var(--trim) 22px 26px,var(--trim-dark) 26px 27px),
+    repeating-linear-gradient(0deg,var(--cloth) 0 2px,var(--cloth-dark) 2px 3px),
+    repeating-linear-gradient(90deg,var(--cloth) 0 2px,var(--cloth-dark) 2px 3px);
+  background-blend-mode:normal,multiply,normal;
+  display:grid;place-items:center;overflow:hidden;
+}
+/* the song's cover, in a brass picture frame */
+.medal{
+  position:relative;width:clamp(150px,34vw,205px);aspect-ratio:1;margin-top:18px;border-radius:6px;
+  padding:8px;background:linear-gradient(135deg,#f4dca0,#8a6528 30%,#e9cf8c 55%,#7a5620 80%,#e9cf8c);
+  box-shadow:0 12px 24px rgba(0,0,0,.6),inset 0 0 0 2px rgba(60,35,10,.5);transform:rotate(-2deg);
+}
+[data-station="pk"] .medal{background:#ff3fae;border-radius:0;padding:5px;transform:none}
+.medal img,.medal .tile{width:100%;height:100%;object-fit:cover;display:block;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);transition:opacity .25s,transform .25s}
+.medal img.swap{opacity:0;transform:scale(.96)}
+[data-station="pk"] .medal img,[data-station="pk"] .medal .tile{border-radius:0}
+.medal .tile{display:grid;place-items:center;background:#000;color:#ff3fae;font:400 64px/1 "Anton",Impact,sans-serif}
+.playing .medal{animation:sway 5s ease-in-out infinite}
+[data-station="pk"].playing .medal{animation:none}
+@keyframes sway{50%{transform:rotate(1.5deg) translateY(-3px)}}
+/* speaker "breathing" glow */
+.grille::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:radial-gradient(circle at 50% 55%,color-mix(in srgb,var(--glass-on) calc(var(--beat,0) * 100%),transparent),transparent 62%)}
+[data-station="pk"] .grille::after{background:radial-gradient(circle at 50% 55%,rgba(255,63,174,var(--beat,0)),transparent 60%)}
+
+/* brand plate */
+.plate{display:block;width:max-content;margin:-14px auto 0;position:relative;z-index:2;padding:4px 18px;border-radius:4px;
+  background:linear-gradient(#f4dca0,#b8913f);color:#3a2408;font:italic 700 15px var(--serif);letter-spacing:.06em;box-shadow:0 3px 6px rgba(0,0,0,.45)}
+[data-station="pk"] .plate{background:#ff3fae;color:#0a0a0a;border-radius:0;font:400 14px "Anton",Impact,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+
+/* glowing dial window */
+.dialwin{
+  margin:18px 0 0;padding:14px 18px 12px;border-radius:12px;position:relative;
+  border:4px solid var(--trim);box-shadow:inset 0 0 0 2px var(--trim-dark),inset 0 6px 18px rgba(0,0,0,.5);
+  background:radial-gradient(ellipse at 50% 60%,color-mix(in srgb,var(--glass-on) 35%,var(--glass-off)),var(--glass-off));
+  color:#d9c39a;transition:background .6s,color .6s;
+}
+.on .dialwin{background:radial-gradient(ellipse at 50% 55%,#fff1c9,var(--glass-on) 55%,color-mix(in srgb,var(--glass-on) 60%,#7a3e0c));color:var(--glass-ink);
+  box-shadow:inset 0 0 0 2px var(--trim-dark),inset 0 4px 14px rgba(120,60,0,.4),0 0 40px color-mix(in srgb,var(--glass-on) 70%,transparent)}
+[data-station="pk"] .dialwin{border-radius:0}
+[data-station="pk"].on .dialwin,[data-station="pk"] .on .dialwin{background:linear-gradient(#ff7fca,#ff3fae);box-shadow:0 0 34px rgba(255,63,174,.55)}
+.dialwin .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+.np{margin:4px 0 6px;font:700 clamp(26px,5.4vw,40px)/1.1 var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[data-station="pk"] .np{font-weight:400;text-transform:uppercase}
+.scale{position:relative;height:30px;margin-top:6px}
+.scale .ticks{position:absolute;left:0;right:0;bottom:0;height:12px;opacity:.7;
+  background:repeating-linear-gradient(90deg,currentColor 0 1px,transparent 1px 5%) bottom/100% 7px no-repeat,
+             repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 20%) bottom/100% 12px no-repeat}
+.scale .nums{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;font-size:11px;letter-spacing:.1em}
+.needle{position:absolute;top:-58px;bottom:-4px;width:3px;margin-left:-1px;background:var(--needle);left:0;border-radius:2px;
+  box-shadow:0 0 6px rgba(179,36,27,.6);transition:left 1.4s cubic-bezier(.3,1.5,.5,1)}
+.prog{height:3px;margin-top:10px;background:rgba(0,0,0,.18);border-radius:2px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:currentColor;opacity:.75}
+.times{display:flex;justify-content:space-between;font-size:12px;margin-top:4px;opacity:.85}
+
+/* knobs + meter */
+.panel{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-top:22px}
+.knobbox{display:grid;justify-items:center;gap:8px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#f1d9a8}
+[data-station="pk"] .knobbox{color:var(--muted)}
+.knob{
+  width:78px;height:78px;border-radius:50%;position:relative;cursor:grab;touch-action:none;
+  background:radial-gradient(circle at 38% 32%,#5b3a1d,#2a170a 62%,#170c04);
+  box-shadow:0 0 0 5px var(--trim),0 0 0 7px var(--trim-dark),0 8px 14px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,220,170,.25);
+}
+.knob::before{content:"";position:absolute;inset:6px;border-radius:50%;
+  background:repeating-conic-gradient(rgba(255,255,255,.07) 0 4deg,transparent 4deg 10deg)}
+.knob .mark{position:absolute;inset:0;transform:rotate(var(--rot,0deg));transition:transform .08s}
+.knob .mark::after{content:"";position:absolute;left:50%;top:8px;width:4px;height:18px;margin-left:-2px;border-radius:2px;background:#f4dca0}
+.knob:focus-visible{outline:3px solid #f6c66b;outline-offset:8px}
+button.knob{appearance:none;border:0;padding:0;font:inherit;color:inherit}
+button.knob .pw{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;color:#f4dca0}
+.on button.knob .pw{color:#ffb35c;text-shadow:0 0 10px #ff9a3c}
+[data-station="pk"] .knob{background:#111;box-shadow:0 0 0 3px #ff3fae,6px 6px 0 #ff3fae;border-radius:0}
+[data-station="pk"] .knob::before{border-radius:0}
+[data-station="pk"] .knob .mark::after,[data-station="pk"] button.knob .pw{background:#ff3fae;color:#ff3fae}
+[data-station="pk"] button.knob .pw{background:none}
+
+.meter{width:150px;height:92px;position:relative;overflow:hidden;border-radius:8px 8px 4px 4px;
+  background:radial-gradient(ellipse at 50% 100%,#fffaf0,var(--meter-face) 70%);
+  border:4px solid var(--trim);box-shadow:inset 0 0 0 2px var(--trim-dark),inset 0 4px 10px rgba(0,0,0,.35)}
+.on .meter{background:radial-gradient(ellipse at 50% 100%,#fffaf0,color-mix(in srgb,var(--glass-on) 45%,#f3e6c4) 85%)}
+[data-station="pk"] .meter,[data-station="pk"] .on .meter{background:#151216;border-radius:0}
+.meter svg{position:absolute;inset:0;width:100%;height:100%}
+.meter .arc{fill:none;stroke:#3a2a1a;stroke-width:1.5}
+.meter .red{fill:none;stroke:#b3241b;stroke-width:4}
+.meter .tick{stroke:#3a2a1a;stroke-width:1.5}
+.meter text{font:9px "Special Elite",monospace;fill:#3a2a1a}
+[data-station="pk"] .meter .arc,[data-station="pk"] .meter .tick{stroke:#8c8390}
+[data-station="pk"] .meter text{fill:#8c8390}
+[data-station="pk"] .meter .red{stroke:#ff3fae}
+.vu{position:absolute;left:50%;bottom:-6px;width:2px;height:80px;margin-left:-1px;background:#1f1813;transform-origin:50% 100%;transform:rotate(-48deg)}
+[data-station="pk"] .vu{background:#f2ecf0}
+.meter .cap{position:absolute;left:50%;bottom:-12px;width:26px;height:26px;margin-left:-13px;border-radius:50%;background:#2a170a}
+[data-station="pk"] .meter .cap{background:#ff3fae}
+
+/* =====================================================================
+   NOW PLAYING TICKET + LISTINGS
+   ===================================================================== */
+.ticket{
+  position:relative;max-width:520px;margin:46px auto 0;padding:18px 24px 18px;transform:rotate(-1.2deg);
+  background:#f8f0dc;color:#1f1813;border:1px solid #d8c6a0;box-shadow:0 14px 26px -14px rgba(60,35,10,.6);
+  -webkit-mask:radial-gradient(circle 9px at 0 50%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 9px at 100% 50%,transparent 98%,#000) right/51% 100% no-repeat;
+          mask:radial-gradient(circle 9px at 0 50%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 9px at 100% 50%,transparent 98%,#000) right/51% 100% no-repeat;
+}
+.ticket{border-top:6px solid var(--accent)}
+.ticket .k{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+.ticket .v{font:700 20px/1.25 var(--serif)}
+.ticket .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px dashed #c4ad83;margin-top:12px;padding-top:12px}
+.vol-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+[data-station="pk"] .ticket{background:#141216;color:var(--ink);border-color:#2c272f;transform:none;-webkit-mask:none;mask:none;box-shadow:6px 6px 0 #ff3fae}
+[data-station="pk"] .ticket .k{color:#ff3fae}
+[data-station="pk"] .ticket .v{font-weight:400;text-transform:uppercase}
+
+.paper{
+  margin:64px auto 0;max-width:760px;padding:26px 28px 30px;background:#f3ead4;color:#1f1813;
+  box-shadow:0 2px 0 rgba(60,40,20,.12),0 26px 40px -24px rgba(60,35,10,.6);transform:rotate(.4deg);
+  background-image:linear-gradient(rgba(120,80,35,.06),rgba(120,80,35,.12));
+}
+.paper .head{text-align:center;border-bottom:3px double #1f1813;padding-bottom:10px}
+.paper .gazette{font:900 clamp(30px,6vw,50px)/1 var(--serif);letter-spacing:.01em}
+.paper .meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;letter-spacing:.14em;text-transform:uppercase;border-top:1px solid #1f1813;margin-top:10px;padding-top:6px}
+.paper h2{margin:18px 0 10px;text-align:center;font:italic 700 22px var(--serif)}
+.list{list-style:none;margin:0;padding:0;columns:2 260px;column-gap:34px;column-rule:1px solid #cdb78e}
+.list li{break-inside:avoid;display:flex;align-items:baseline;gap:6px;padding:6px 0;position:relative}
+.list .n{font-size:11px;color:#8a7458;width:20px;flex:none}
+.list .thumb{width:34px;height:34px;flex:none;align-self:center;object-fit:cover;border:2px solid #fffaf0;box-shadow:0 2px 4px rgba(60,35,10,.4);transform:rotate(-3deg)}
+.list li:nth-child(even) .thumb{transform:rotate(3deg)}
+[data-station="pk"] .list .thumb{border-color:#2c272f;transform:none;box-shadow:none}
+.list .t{font:700 17px/1.25 var(--serif);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .dots{flex:1;border-bottom:1.5px dotted #9a8466;transform:translateY(-4px);min-width:12px}
+.list .when{font-size:13px;flex:none}
+.list li.live .t{color:var(--accent)}
+.list li.live .when{font-size:11px;letter-spacing:.08em;color:#fff;background:var(--accent);padding:2px 7px;transform:rotate(-3deg)}
+[data-station="pk"] .paper{background:#141216;color:var(--ink);transform:none;box-shadow:6px 6px 0 #ff3fae;background-image:none}
+[data-station="pk"] .paper .head,[data-station="pk"] .paper .meta{border-color:#f2ecf0}
+[data-station="pk"] .paper .gazette,[data-station="pk"] .paper h2{font-family:"Anton",Impact,sans-serif;font-weight:400;font-style:normal;text-transform:uppercase}
+[data-station="pk"] .list{column-rule-color:#2c272f}
+[data-station="pk"] .list .t{font:400 17px/1.25 "Anton",Impact,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+[data-station="pk"] .list .dots{border-color:#4a434e}
+[data-station="pk"] .list li.live .t{color:#ff3fae}
+[data-station="pk"] .list li.live .when{background:#ff3fae;color:#0a0a0a}
+
+footer{margin-top:44px;text-align:center;font-size:12px;color:var(--muted)}
+
+@media (max-width:560px){
+  .radio{padding:20px 16px 22px;border-radius:200px 200px 20px 20px / 150px 150px 20px 20px}
+  .panel{grid-template-columns:1fr 1fr;justify-items:center}
+  .meter{grid-column:1/-1;grid-row:1}
+  .knob{width:64px;height:64px}
+  .paper{padding:20px 16px}
+  .c-rose,.c-rose2{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="collage" aria-hidden="true">
+  <img class="c-notes" src="media/vintage/notes.jpg" alt="">
+  <img class="c-news"  src="media/vintage/news.jpg" alt="">
+  <img class="c-rose"  src="media/vintage/rose.jpg" alt="">
+  <img class="c-rose2" src="media/vintage/rose.jpg" alt="">
+</div>
+
+<div class="wrap" id="app">
+  <div class="top"><div class="lamp" id="lamp"><i></i><span>On air</span></div></div>
+
+  <header class="mast">
+    <div class="presents" id="presents">Finn Shapiro presents</div>
+    <h1 class="logo" aria-label="Vintage Radio" id="logo"><span class="big" id="logoBig">Vintage</span><span class="script" id="logoScript">radio</span></h1>
+    <p class="tagline" id="tagline">Everyone hears the same song at the same time. Turn the knob to hear what's on air right now.</p>
+  </header>
+
+  <section class="radio-wrap" aria-label="Radio">
+    <div class="radio" id="radio">
+      <div class="grille" id="grille">
+        <div class="medal">
+          <img id="cover" alt="">
+          <div class="tile" id="coverTile" hidden>PK</div>
+        </div>
+      </div>
+      <span class="plate" id="plate">Finn Shapiro · Model V</span>
+
+      <div class="dialwin" aria-live="polite">
+        <div class="row"><span>Now playing</span><span id="station">Vintage · FM</span></div>
+        <div class="np" id="title">…</div>
+        <div class="scale">
+          <div class="nums" id="nums"></div>
+          <div class="ticks"></div>
+          <div class="needle" id="needle"></div>
+        </div>
+        <div class="prog"><i id="prog"></i></div>
+        <div class="times"><span id="tNow">0:00</span><span id="tEnd">0:00</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="knobbox">
+          <div class="knob" id="volKnob" role="slider" tabindex="0" aria-label="Volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="85"><div class="mark"></div></div>
+          <span>Volume</span>
+        </div>
+        <div class="meter" aria-hidden="true">
+          <svg viewBox="0 0 150 92">
+            <path class="arc" d="M18 70 A62 62 0 0 1 132 70"/>
+            <path class="red" d="M106 33 A62 62 0 0 1 132 70"/>
+            <g id="ticks"></g>
+            <text x="12" y="20">-20</text><text x="66" y="14">-3</text><text x="124" y="20">+3</text>
+            <text x="64" y="58" style="font-size:11px;letter-spacing:.2em">VU</text>
+          </svg>
+          <div class="vu" id="vu"></div>
+          <div class="cap"></div>
+        </div>
+        <div class="knobbox">
+          <button class="knob" id="tune" type="button" aria-pressed="false" aria-label="Tune in"><span class="pw">⏻</span></button>
+          <span id="tuneLabel">Tune in</span>
+        </div>
+      </div>
+    </div>
+    <div class="feet" aria-hidden="true"><i></i><i></i></div>
+  </section>
+
+  <div class="ticket">
+    <div class="cols" style="border:0;margin:0;padding:0">
+      <div><div class="k">On air</div><div class="v" id="tOn">…</div></div>
+      <div><div class="k">Up next</div><div class="v" id="next">…</div></div>
+    </div>
+  </div>
+
+  <section class="paper">
+    <div class="head">
+      <div class="gazette" id="gazette">The Vintage Times</div>
+      <div class="meta"><span id="today"></span><span>Radio listings</span><span>Price: free</span></div>
+    </div>
+    <h2 id="listHead">Today's program</h2>
+    <ol class="list" id="sched"></ol>
+  </section>
+
+  <footer>© 2026 Finn Shapiro</footer>
+</div>
+
+<audio id="audio" preload="none"></audio>
+
+<script>
+/* =====================================================================
+   SETTINGS
+   ===================================================================== */
+// The radio switches from Vintage to PK at 12:00 PM Eastern on Sunday, Feb 28, 2027 (= 17:00 UTC).
+const SWITCH_AT = Date.UTC(2027, 1, 28, 17, 0, 0);
+
+// The songs, in the order the station plays them (it loops forever).
+// "len" is the song's length in seconds. If you swap a file, update its length.
+const STATIONS = {
+  vintage: {
+    big: "Vintage", script: "radio", presents: "Finn Shapiro presents", gazette: "The Vintage Times",
+    station: "Vintage · FM", plate: "Finn Shapiro · Model V", album: "Vintage",
+    tagline: "Everyone hears the same song at the same time. Turn the knob to hear what's on air right now.",
+    cover: "media/vintage/cover.jpg", dial: ["88", "92", "96", "100", "104", "108"], folder: "media/vintage/", covers: "media/vintage/covers/",
+    start: Date.UTC(2026, 0, 1),           // the moment track 1 first played (keeps everyone in sync)
+    tracks: [   // album order; each song has its own cover in media/vintage/covers/
+      { title: "Countdown",            file: "countdown.mp3",          len: 227.90, cover: "countdown.jpg" },
+      { title: "Party",                file: "party.mp3",              len: 175.35, cover: "party.jpg" },
+      { title: "Funny",                file: "funny.mp3",              len: 161.30, cover: "funny.jpg" },
+      { title: "Revenge",              file: "revenge.mp3",            len: 211.74, cover: "revenge.jpg" },
+      { title: "Catch Me",             file: "catch-me.mp3",           len: 197.20, cover: "catch-me.jpg" },
+      { title: "In Repair",            file: "in-repair.mp3",          len: 195.56, cover: "in-repair.jpg" },
+      { title: "Winner",               file: "winner.mp3",             len: 172.57, cover: "winner.jpg" },
+      { title: "Pretty Little Eyes",   file: "pretty-little-eyes.mp3", len: 190.53, cover: "pretty-little-eyes.jpg" },
+      { title: "W4tch U Di3",          file: "w4tch-u-di3.mp3",        len: 151.57, cover: "w4tch-u-di3.jpg" },
+      { title: "Mirror",               file: "mirror.mp3",             len: 168.35, cover: "mirror.jpg" },
+      { title: "Exotic",               file: "exotic.mp3",             len: 161.70, cover: "exotic.jpg" },
+      { title: "Kissmarks (Blame Me)", file: "kissmarks.mp3",          len: 169.40, cover: "kissmarks.jpg" }
+    ]
+  },
+  pk: {
+    big: "PK", script: "radio", presents: "Vintage signed off. Now broadcasting", gazette: "Pretty Killer Listings",
+    station: "PK · FM", plate: "Pretty Killer", album: "Pretty Killer",
+    tagline: "Pretty Killer is on the air. Everyone hears the same song at the same time.",
+    cover: "media/pk/cover.jpg", dial: ["P", "R", "E", "T", "T", "Y"], folder: "media/pk/", covers: "media/pk/",
+    start: SWITCH_AT,                      // PK starts on track 1 right at the switch
+    tracks: [
+      { title: "PK",               file: "pk.mp3",               len: 166.75 },
+      { title: "Sincerely Carrie", file: "sincerely-carrie.mp3", len: 141.69 },
+      { title: "Attention Please", file: "attention-please.mp3", len: 157.48 },
+      { title: "Shoot Then Go",    file: "shoot-then-go.mp3",    len: 183.46 },
+      { title: "Musician",         file: "musician.mp3",         len: 156.66 },
+      { title: "Hairography",      file: "hairography.mp3",      len: 171.68 },
+      { title: "I Made It",        file: "i-made-it.mp3",        len: 171.72 },
+      { title: "Lucky",            file: "lucky.mp3",            len: 240.95 },
+      { title: "Worked",           file: "worked.mp3",           len: 170.73 },
+      { title: "Anne",             file: "anne.mp3",             len: 209.55, cover: "anne.jpg" }
+    ]
+  }
+};
+
+// Colors picked from each song's cover: [accent, glow, background tint]
+const COLORS = {
+  "countdown.mp3":          ["#1c1c1c", "#f4f4f4", "#d4d4d4"],   // black & white
+  "party.mp3":              ["#d42f93", "#ff6bd6", "#a98cff"],   // neon pink & blue
+  "funny.mp3":              ["#6a2bb0", "#c08bff", "#b48fe0"],   // purple
+  "revenge.mp3":            ["#1d4fd8", "#6fb0ff", "#7fa6f0"],   // electric blue
+  "catch-me.mp3":           ["#b98a00", "#ffe27a", "#fff0a8"],   // butter yellow
+  "in-repair.mp3":          ["#cf3b36", "#ff9a8f", "#f6b2a6"],   // coral red
+  "winner.mp3":             ["#d0641a", "#ffb766", "#f9d4ad"],   // orange & peach
+  "pretty-little-eyes.mp3": ["#3f78bd", "#b2d8ff", "#c9e3fa"],   // baby blue
+  "w4tch-u-di3.mp3":        ["#a3245e", "#e85aa0", "#d58aae"],   // plum & magenta
+  "mirror.mp3":             ["#55595e", "#eef2f5", "#cfd3d7"],   // silver
+  "exotic.mp3":             ["#1f7a36", "#7cf092", "#9fd8a6"],   // jungle green
+  "kissmarks.mp3":          ["#d81c82", "#ff86c8", "#f3b3d5"]    // hot pink
+};
+
+/* =====================================================================
+   RADIO
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const audio = $("#audio");
+const root = document.documentElement;
+let override = null;      // "vintage" / "pk" while testing (type vintage, pk or auto)
+let listening = false;
+let current = null;       // { key, i }
+
+const stationKey = () => override || (Date.now() >= SWITCH_AT ? "pk" : "vintage");
+const fmt = s => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" })[c]);
+
+// Which song is on air at time t, and how far into it (seconds).
+function onAir(key, t = Date.now()){
+  const st = STATIONS[key];
+  const total = st.tracks.reduce((a, x) => a + x.len, 0);
+  let pos = ((t - st.start) / 1000) % total;
+  if (pos < 0) pos += total;
+  for (let i = 0; i < st.tracks.length; i++){
+    if (pos < st.tracks[i].len) return { i, offset: pos };
+    pos -= st.tracks[i].len;
+  }
+  return { i: 0, offset: 0 };
+}
+
+function applyStation(key){
+  const st = STATIONS[key];
+  root.dataset.station = key;
+  document.title = key === "pk" ? "PK Radio" : "Vintage Radio";
+  $("#logo").setAttribute("aria-label", document.title);
+  $("#logoBig").textContent = st.big;
+  $("#logoScript").textContent = st.script;
+  $("#presents").textContent = st.presents;
+  $("#tagline").textContent = st.tagline;
+  $("#gazette").textContent = st.gazette;
+  $("#station").textContent = st.station;
+  $("#plate").textContent = st.plate;
+  $("#nums").innerHTML = st.dial.map(n => `<span>${esc(n)}</span>`).join("");
+  setCover(st.cover);
+}
+
+// the song's own cover (or the album cover); if it's missing, show a "PK" tile instead
+const coverOf = (st, tr) => tr && tr.cover ? st.covers + tr.cover : st.cover;
+function setCover(src){
+  const img = $("#cover"), tile = $("#coverTile");
+  if (img.dataset.src === src) return;
+  img.dataset.src = src;
+  img.classList.add("swap");
+  img.onerror = () => { img.hidden = true; tile.hidden = false; };
+  img.onload = () => { img.hidden = false; tile.hidden = true; img.classList.remove("swap"); };
+  setTimeout(() => { img.src = src; }, img.src ? 250 : 0);
+}
+
+function renderSchedule(key){
+  const st = STATIONS[key];
+  const now = Date.now();
+  const air = onAir(key, now);
+  let t = now - air.offset * 1000;          // when each song next starts, in the viewer's own time
+  const startAt = [];
+  for (let k = 0; k < st.tracks.length; k++){
+    const j = (air.i + k) % st.tracks.length;
+    startAt[j] = t;
+    t += st.tracks[j].len * 1000;
+  }
+  const clock = ms => new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  $("#sched").innerHTML = st.tracks.map((x, j) => `<li class="${j === air.i ? "live" : ""}">
+    <span class="n">${String(j + 1).padStart(2, "0")}</span>
+    <img class="thumb" src="${esc(coverOf(st, x))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+    <span class="t">${esc(x.title)}</span><span class="dots"></span>
+    <span class="when">${j === air.i ? "On air now" : clock(startAt[j])}</span></li>`).join("");
+  $("#today").textContent = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+}
+
+function tick(){
+  const key = stationKey();
+  if (root.dataset.station !== key){
+    applyStation(key);
+    current = null;
+    if (listening){ staticBurst(900); play(); }   // the big switch: a burst of static, then the new station
+  }
+  const st = STATIONS[key];
+  const air = onAir(key);
+  const tr = st.tracks[air.i];
+  if (!current || current.key !== key || current.i !== air.i){
+    current = { key, i: air.i };
+    const nxt = st.tracks[(air.i + 1) % st.tracks.length].title;
+    $("#title").textContent = tr.title;
+    $("#tOn").textContent = tr.title;
+    $("#next").textContent = nxt;
+    $("#tEnd").textContent = fmt(tr.len);
+    setCover(coverOf(st, tr));
+    const c = key === "vintage" && COLORS[tr.file];
+    ["--song-accent", "--song-glow", "--song-tint"].forEach((v, n) => c ? root.style.setProperty(v, c[n]) : root.style.removeProperty(v));
+    renderSchedule(key);
+    $("#needle").style.left = (4 + air.i / (st.tracks.length - 1) * 92) + "%";
+    if ("mediaSession" in navigator){
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: tr.title, artist: "Finn Shapiro", album: st.album,
+        artwork: [{ src: new URL(coverOf(st, tr), location.href).href, sizes: "600x600", type: "image/jpeg" }]
+      });
+    }
+    // a new song is on air: play it (this is also how one song rolls into the next)
+    if (listening && audio.dataset.file !== st.folder + tr.file) play();
+  }
+  $("#prog").style.width = (air.offset / tr.len * 100) + "%";
+  $("#tNow").textContent = fmt(air.offset);
+}
+
+// Load whatever is on air and jump to the live spot.
+function play(){
+  const key = stationKey();
+  const st = STATIONS[key];
+  const air = onAir(key);
+  const src = st.folder + st.tracks[air.i].file;
+  audio.dataset.file = src;
+  audio.src = src;
+  audio.preload = "auto";
+  audio.addEventListener("loadedmetadata", () => {
+    const live = onAir(key);                // recalc: loading takes a moment
+    if (live.i === air.i) audio.currentTime = live.offset;
+  }, { once: true });
+  audio.play().catch(() => {});
+}
+
+// If the connection stalls and we fall behind, catch up to the live spot.
+setInterval(() => {
+  if (!listening || audio.paused || !audio.duration) return;
+  const key = stationKey(), air = onAir(key);
+  if (audio.dataset.file === STATIONS[key].folder + STATIONS[key].tracks[air.i].file && Math.abs(audio.currentTime - air.offset) > 4)
+    audio.currentTime = air.offset;
+}, 15000);
+
+/* ---------- sound: static + the VU meter ---------- */
+let ctx, analyser, data;
+function audioCtx(){
+  if (ctx) return ctx;
+  try{
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // The meter listens to the music, but only on a real website: opened straight from a file,
+    // the browser would mute the song if we did this. Then the meter just dances on its own.
+    if (location.protocol.startsWith("http")){
+      const srcNode = ctx.createMediaElementSource(audio);
+      analyser = ctx.createAnalyser(); analyser.fftSize = 1024;
+      data = new Uint8Array(analyser.fftSize);
+      srcNode.connect(analyser); analyser.connect(ctx.destination);
+    }
+  }catch(e){ ctx = null; }
+  return ctx;
+}
+function staticBurst(ms){
+  const c = audioCtx(); if (!c) return;
+  const len = Math.floor(c.sampleRate * ms / 1000);
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const s = c.createBufferSource(); s.buffer = buf;
+  const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 2200; f.Q.value = .6;
+  const g = c.createGain(); g.gain.value = .2 * volume;
+  s.connect(f).connect(g).connect(c.destination); s.start();
+}
+// meter tick marks
+$("#ticks").innerHTML = Array.from({ length: 11 }, (_, k) => {
+  const a = (-48 + k * 9.6) * Math.PI / 180, cx = 75, cy = 98, r1 = 62 + 26, r2 = r1 - (k % 5 ? 5 : 9);
+  return `<line class="tick" x1="${cx + Math.sin(a) * r1}" y1="${cy - Math.cos(a) * r1}" x2="${cx + Math.sin(a) * r2}" y2="${cy - Math.cos(a) * r2}"/>`;
+}).join("");
+let level = 0;
+function meterLoop(){
+  let target = 0;
+  if (listening && analyser && !audio.paused){
+    analyser.getByteTimeDomainData(data);
+    let sum = 0;
+    for (let i = 0; i < data.length; i++){ const v = (data[i] - 128) / 128; sum += v * v; }
+    target = Math.min(1, Math.sqrt(sum / data.length) * 3.2);
+  } else if (listening && !audio.paused){
+    const t = performance.now() / 1000;          // no meter input: a natural-looking bounce
+    target = .45 + .22 * Math.sin(t * 7.3) * Math.sin(t * 2.1) + .12 * Math.random();
+  }
+  level += (target - level) * (target > level ? .45 : .08);   // fast up, slow fall, like a real needle
+  $("#vu").style.transform = `rotate(${-48 + level * 96}deg)`;
+  $("#grille").style.setProperty("--beat", (level * .45).toFixed(3));
+  requestAnimationFrame(meterLoop);
+}
+requestAnimationFrame(meterLoop);
+
+/* ---------- controls ---------- */
+function setListening(on){
+  listening = on;
+  $("#radio").classList.toggle("on", on);
+  root.classList.toggle("playing", on);
+  $("#lamp").classList.toggle("on", on);
+  $("#tune").setAttribute("aria-pressed", on);
+  $("#tune").setAttribute("aria-label", on ? "Turn off" : "Tune in");
+  $("#tuneLabel").textContent = on ? "Turn off" : "Tune in";
+  if (on){
+    const c = audioCtx(); if (c && c.state === "suspended") c.resume();
+    staticBurst(650); play();          // start right away, inside the click, so browsers allow the sound
+  } else {
+    audio.pause(); audio.removeAttribute("src"); audio.dataset.file = ""; audio.load();
+  }
+}
+$("#tune").addEventListener("click", () => setListening(!listening));
+
+// Volume knob: drag up/down (or around), scroll, or use the arrow keys.
+let volume = 0.85;
+const knob = $("#volKnob");
+function setVolume(v){
+  volume = Math.min(1, Math.max(0, v));
+  audio.volume = volume;
+  knob.style.setProperty("--rot", (-135 + volume * 270) + "deg");
+  knob.querySelector(".mark").style.transform = `rotate(${-135 + volume * 270}deg)`;
+  knob.setAttribute("aria-valuenow", Math.round(volume * 100));
+}
+let drag = null;
+knob.addEventListener("pointerdown", e => { drag = { y: e.clientY, v: volume }; knob.setPointerCapture(e.pointerId); knob.style.cursor = "grabbing"; });
+knob.addEventListener("pointermove", e => { if (drag) setVolume(drag.v + (drag.y - e.clientY) / 160); });
+knob.addEventListener("pointerup", () => { drag = null; knob.style.cursor = ""; });
+knob.addEventListener("wheel", e => { e.preventDefault(); setVolume(volume - Math.sign(e.deltaY) * .05); }, { passive: false });
+knob.addEventListener("keydown", e => {
+  const step = { ArrowUp: .05, ArrowRight: .05, ArrowDown: -.05, ArrowLeft: -.05, PageUp: .2, PageDown: -.2 }[e.key];
+  if (step){ e.preventDefault(); setVolume(volume + step); }
+  if (e.key === "Home"){ e.preventDefault(); setVolume(0); }
+  if (e.key === "End"){ e.preventDefault(); setVolume(1); }
+});
+setVolume(volume);
+
+if ("mediaSession" in navigator){
+  navigator.mediaSession.setActionHandler("play", () => setListening(true));
+  navigator.mediaSession.setActionHandler("pause", () => setListening(false));
+}
+
+// Testing: type "pk" or "vintage" anywhere to preview a station, "auto" to follow the date again.
+let typed = "";
+addEventListener("keydown", e => {
+  if (e.key.length !== 1) return;
+  typed = (typed + e.key.toLowerCase()).slice(-10);
+  const hit = ["vintage", "auto", "pk"].find(w => typed.endsWith(w));
+  if (!hit) return;
+  typed = "";
+  override = hit === "auto" ? null : hit;
+  tick();
+});
+
+applyStation(stationKey());
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
