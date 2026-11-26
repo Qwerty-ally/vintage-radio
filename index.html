@@ -265,6 +265,13 @@ button.knob .pw{position:absolute;inset:0;display:grid;place-items:center;font-s
 [data-station="pk"] .list li.live .t{color:#ff3fae}
 [data-station="pk"] .list li.live .when{background:#ff3fae;color:#0a0a0a}
 
+.pv{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
+  padding:10px 16px;background:#1f1813;color:#f4ecda;font:14px var(--type);text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.pv b{color:#f6c66b;letter-spacing:.12em;text-transform:uppercase;font-size:12px}
+.pv #pvText{font-variant-numeric:tabular-nums}
+.pv button{appearance:none;border:1px solid currentColor;background:none;color:inherit;font:inherit;font-size:12px;padding:4px 10px;border-radius:999px;cursor:pointer}
+[data-station="pk"] .pv{background:#ff3fae;color:#0a0a0a}
+[data-station="pk"] .pv b{color:#0a0a0a}
 footer{margin-top:44px;text-align:center;font-size:12px;color:var(--muted)}
 
 @media (max-width:560px){
@@ -281,6 +288,11 @@ footer{margin-top:44px;text-align:center;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
+<div class="pv" id="pv" hidden>
+  <b>Admin preview</b>
+  <span id="pvText">Press Tune in. Vintage plays for 30 seconds, then it switches to PK.</span>
+  <button type="button" id="pvAgain">Start over</button>
+</div>
 <div class="grain" aria-hidden="true"></div>
 <div class="vignette" aria-hidden="true"></div>
 <div class="collage" aria-hidden="true">
@@ -457,7 +469,14 @@ let current = null;       // { key, n, k }
 // Phone and computer clocks are often seconds apart, so the radio asks an internet time server
 // for the exact time and uses that instead. now() is "real" time on every device.
 let clockOffset = 0;                       // real time minus this device's time, in ms
-const now = () => Date.now() + clockOffset;
+// Admin preview (?preview=switch): the clock starts 30 seconds before the switch, so you can
+// watch and hear exactly what happens at 12:00 PM ET on Feb 28. Only on that device.
+const PREVIEW = new URLSearchParams(location.search).get("preview") === "switch";
+const PREVIEW_LEAD = 30000;                // how long Vintage plays before the switch, in ms
+let previewT0 = 0, previewStarted = false;  // the 30 seconds start when you press Tune in
+const now = () => PREVIEW
+  ? SWITCH_AT - PREVIEW_LEAD + (previewStarted ? performance.now() - previewT0 : 0)
+  : Date.now() + clockOffset;
 async function syncClock(){
   let best = null;
   for (let i = 0; i < 5; i++){             // a few tries; keep the fastest answer (the most exact one)
@@ -713,6 +732,7 @@ function setListening(on){
   $("#tune").setAttribute("aria-label", on ? "Turn off" : "Tune in");
   $("#tuneLabel").textContent = on ? "Turn off" : "Tune in";
   if (on){
+    if (PREVIEW && !previewStarted){ previewStarted = true; previewT0 = performance.now(); current = null; tick(); }
     const c = audioCtx(); if (c && c.state === "suspended") c.resume();
     staticBurst(650); play();          // start right away, inside the click, so browsers allow the sound
   } else {
@@ -760,6 +780,23 @@ addEventListener("keydown", e => {
   override = hit === "auto" ? null : hit;
   tick();
 });
+
+/* ---------- admin preview banner ---------- */
+let pkMissing = false;
+if (PREVIEW){
+  $("#pv").hidden = false;
+  $("#pvAgain").addEventListener("click", () => location.reload());
+  audio.addEventListener("error", () => { if (stationKey() === "pk") pkMissing = true; });
+  setInterval(() => {
+    if (!previewStarted) return;
+    const left = Math.ceil((SWITCH_AT - now()) / 1000);
+    $("#pvText").textContent = left > 0
+      ? `Vintage now. Switching to PK in ${left}s…`
+      : pkMissing
+        ? "Switched! (No PK sound yet: the PK songs aren't uploaded. The look is exactly what everyone will see.)"
+        : "Switched! This is what everyone sees and hears at 12:00 PM ET on Feb 28.";
+  }, 250);
+}
 
 applyStation(stationKey());
 tick();

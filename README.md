@@ -8,3 +8,4 @@ A radio station for Finn Shapiro's Vintage album. Everyone who tunes in hears th
   - **Before then, copy the PK mp3s into `media/pk/`** from `Downloads/Pretty Killer` (the file names are listed in `PK_SONGS`). They are left out for now so nobody can find them early.
 - **Testing:** type `pk` anywhere to preview the PK side, `vintage` to go back, and `auto` to follow the date again.
 - If you change a song file, update its `len` (its length in seconds) so everyone stays in sync.
+- **Admin preview of the switch:** open `?preview=switch` (there's a button on the tickets admin page). Press Tune in: Vintage plays for 30 seconds with a countdown, then the static and PK Radio starting on "PK". It only changes that one device.
