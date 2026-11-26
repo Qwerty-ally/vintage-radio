@@ -453,7 +453,31 @@ let override = null;      // "vintage" / "pk" while testing (type vintage, pk or
 let listening = false;
 let current = null;       // { key, n, k }
 
-const stationKey = () => override || (Date.now() >= SWITCH_AT ? "pk" : "vintage");
+// ---------- One clock for every device ----------
+// Phone and computer clocks are often seconds apart, so the radio asks an internet time server
+// for the exact time and uses that instead. now() is "real" time on every device.
+let clockOffset = 0;                       // real time minus this device's time, in ms
+const now = () => Date.now() + clockOffset;
+async function syncClock(){
+  let best = null;
+  for (let i = 0; i < 5; i++){             // a few tries; keep the fastest answer (the most exact one)
+    try{
+      const t0 = performance.now();
+      const res = await fetch("https://time.akamai.com/?iso&ms&_=" + Math.random(), { cache: "no-store" });
+      const real = Date.parse((await res.text()).trim());
+      const t1 = performance.now();
+      if (isNaN(real)) continue;
+      const trip = t1 - t0;
+      const offset = real - (Date.now() - trip / 2);   // the answer is about half a round trip old
+      if (!best || trip < best.trip) best = { trip, offset };
+    }catch(e){}
+  }
+  if (best) clockOffset = best.offset;
+}
+syncClock();
+setInterval(syncClock, 5 * 60 * 1000);
+
+const stationKey = () => override || (now() >= SWITCH_AT ? "pk" : "vintage");
 const fmt = s => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" })[c]);
 
@@ -488,7 +512,7 @@ function orderFor(key, n){                  // the play order (track numbers) fo
 const loopLen = key => STATIONS[key].tracks.reduce((a, x) => a + x.len, 0);
 
 // What's on air at time t: which loop (n), which spot in that loop (k), which song (i), how far in (offset).
-function onAir(key, t = Date.now()){
+function onAir(key, t = now()){
   const st = STATIONS[key], total = loopLen(key);
   const pos = Math.max(0, (t - st.start) / 1000);
   const n = Math.floor(pos / total);
@@ -504,9 +528,9 @@ function onAir(key, t = Date.now()){
 
 // The next `count` songs from now (the first one is on air), with when each starts.
 function upcoming(key, count){
-  const st = STATIONS[key], now = Date.now(), air = onAir(key, now);
+  const st = STATIONS[key], t0 = now(), air = onAir(key, t0);
   const out = [];
-  let n = air.n, k = air.k, t = now - air.offset * 1000;
+  let n = air.n, k = air.k, t = t0 - air.offset * 1000;
   while (out.length < count){
     const o = orderFor(key, n), tr = st.tracks[o[k]];
     out.push({ tr, at: t, live: out.length === 0 });
@@ -598,6 +622,7 @@ function play(){
   const air = onAir(key);
   const src = st.tracks[air.i].src;
   audio.dataset.file = src;
+  audio.playbackRate = 1;
   audio.src = src;
   audio.preload = "auto";
   audio.addEventListener("loadedmetadata", () => {
@@ -608,12 +633,23 @@ function play(){
 }
 
 // If the connection stalls and we fall behind, catch up to the live spot.
+// Keep every device lined up: twice a second, compare where we are with where the station is.
+// A tiny gap is fixed by playing a touch faster or slower (you can't hear it); a big gap jumps.
 setInterval(() => {
-  if (!listening || audio.paused || !audio.duration) return;
+  if (!listening || audio.paused || audio.seeking || audio.readyState < 3) return;
   const key = stationKey(), air = onAir(key);
-  if (audio.dataset.file === STATIONS[key].tracks[air.i].src && Math.abs(audio.currentTime - air.offset) > 4)
-    audio.currentTime = air.offset;
-}, 15000);
+  if (audio.dataset.file !== STATIONS[key].tracks[air.i].src) return;
+  const lag = (ctx && (ctx.outputLatency || ctx.baseLatency)) || 0;   // time from the speaker to your ears
+  const drift = audio.currentTime - lag - air.offset;                // + = ahead, - = behind
+  if (Math.abs(drift) > 1){
+    audio.playbackRate = 1;
+    audio.currentTime = air.offset + lag + 0.15;                     // a jump takes a moment, so land a bit ahead
+  } else if (Math.abs(drift) > 0.03){
+    audio.playbackRate = 1 - Math.max(-0.06, Math.min(0.06, drift * 0.5));
+  } else {
+    audio.playbackRate = 1;
+  }
+}, 500);
 
 /* ---------- sound: static + the VU meter ---------- */
 let ctx, analyser, data;
