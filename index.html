@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Vintage Radio</title>
+<title>Finn Shapiro Radio</title>
 <meta name="description" content="Finn Shapiro radio. Everyone hears the same song at the same time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -92,7 +92,8 @@ body{min-height:100vh;color:var(--ink);font:16px/1.55 var(--type);background:var
 .mast{text-align:center;padding:64px 0 40px}
 .presents{font:italic 400 19px var(--serif);color:var(--muted)}
 .logo{margin:4px 0 0;line-height:.85;font-weight:400}
-.logo .big{display:block;font:400 clamp(72px,17vw,156px)/.9 var(--type);letter-spacing:.01em}
+.logo .big{display:block;font:400 clamp(46px,11.5vw,112px)/.95 var(--type);letter-spacing:.01em}
+[data-station="pk"] .logo .big{font-size:clamp(72px,17vw,156px)}
 .logo .script{display:inline-block;margin-top:-.1em;font:italic 700 clamp(40px,8vw,72px)/1 var(--serif);color:var(--accent);transform:rotate(-4deg)}
 [data-station="pk"] .logo .big{font-family:"Anton",Impact,sans-serif;text-transform:uppercase;color:var(--accent)}
 [data-station="pk"] .logo .script{font:400 clamp(32px,6vw,52px)/1 "Anton",Impact,sans-serif;color:var(--ink);text-transform:uppercase;letter-spacing:.2em;transform:none}
@@ -246,6 +247,7 @@ button.knob .pw{position:absolute;inset:0;display:grid;place-items:center;font-s
 .list{list-style:none;margin:0;padding:0;columns:2 260px;column-gap:34px;column-rule:1px solid #cdb78e}
 .list li{break-inside:avoid;display:flex;align-items:baseline;gap:6px;padding:6px 0;position:relative}
 .list .n{font-size:11px;color:#8a7458;width:20px;flex:none}
+.list .side{font:11px var(--type);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-left:4px}
 .list .thumb{width:34px;height:34px;flex:none;align-self:center;object-fit:cover;border:2px solid #fffaf0;box-shadow:0 2px 4px rgba(60,35,10,.4);transform:rotate(-3deg)}
 .list li:nth-child(even) .thumb{transform:rotate(3deg)}
 [data-station="pk"] .list .thumb{border-color:#2c272f;transform:none;box-shadow:none}
@@ -292,8 +294,8 @@ footer{margin-top:44px;text-align:center;font-size:12px;color:var(--muted)}
   <div class="top"><div class="lamp" id="lamp"><i></i><span>On air</span></div></div>
 
   <header class="mast">
-    <div class="presents" id="presents">Finn Shapiro presents</div>
-    <h1 class="logo" aria-label="Vintage Radio" id="logo"><span class="big" id="logoBig">Vintage</span><span class="script" id="logoScript">radio</span></h1>
+    <div class="presents" id="presents">Vintage, on the air</div>
+    <h1 class="logo" aria-label="Finn Shapiro Radio" id="logo"><span class="big" id="logoBig">Finn Shapiro</span><span class="script" id="logoScript">radio</span></h1>
     <p class="tagline" id="tagline">Everyone hears the same song at the same time. Turn the knob to hear what's on air right now.</p>
   </header>
 
@@ -356,7 +358,7 @@ footer{margin-top:44px;text-align:center;font-size:12px;color:var(--muted)}
       <div class="gazette" id="gazette">The Vintage Times</div>
       <div class="meta"><span id="today"></span><span>Radio listings</span><span>Price: free</span></div>
     </div>
-    <h2 id="listHead">Today's program</h2>
+    <h2 id="listHead">Coming up</h2>
     <ol class="list" id="sched"></ol>
   </section>
 
@@ -372,48 +374,56 @@ footer{margin-top:44px;text-align:center;font-size:12px;color:var(--muted)}
 // The radio switches from Vintage to PK at 12:00 PM Eastern on Sunday, Feb 28, 2027 (= 17:00 UTC).
 const SWITCH_AT = Date.UTC(2027, 1, 28, 17, 0, 0);
 
-// The songs, in the order the station plays them (it loops forever).
+// ---------- The songs ----------
 // "len" is the song's length in seconds. If you swap a file, update its length.
+const VINTAGE_SONGS = [   // files in media/vintage/, covers in media/vintage/covers/
+  { title: "Countdown",            file: "countdown.mp3",          len: 227.90, cover: "countdown.jpg" },
+  { title: "Party",                file: "party.mp3",              len: 175.35, cover: "party.jpg" },
+  { title: "Funny",                file: "funny.mp3",              len: 161.30, cover: "funny.jpg" },
+  { title: "Revenge",              file: "revenge.mp3",            len: 211.74, cover: "revenge.jpg" },
+  { title: "Catch Me",             file: "catch-me.mp3",           len: 197.20, cover: "catch-me.jpg" },
+  { title: "In Repair",            file: "in-repair.mp3",          len: 195.56, cover: "in-repair.jpg" },
+  { title: "Winner",               file: "winner.mp3",             len: 172.57, cover: "winner.jpg" },
+  { title: "Pretty Little Eyes",   file: "pretty-little-eyes.mp3", len: 190.53, cover: "pretty-little-eyes.jpg" },
+  { title: "W4tch U Di3",          file: "w4tch-u-di3.mp3",        len: 151.57, cover: "w4tch-u-di3.jpg" },
+  { title: "Mirror",               file: "mirror.mp3",             len: 168.35, cover: "mirror.jpg" },
+  { title: "Exotic",               file: "exotic.mp3",             len: 161.70, cover: "exotic.jpg" },
+  { title: "Kissmarks (Blame Me)", file: "kissmarks.mp3",          len: 169.40, cover: "kissmarks.jpg" }
+].map(s => ({ ...s, side: "Vintage", src: "media/vintage/" + s.file, cover: "media/vintage/covers/" + s.cover }));
+
+const PK_SONGS = [        // files go in media/pk/ before the switch (copy them from Downloads/Pretty Killer)
+  { title: "PK",               file: "pk.mp3",               len: 166.75, side: "Killer" },
+  { title: "Attention Please", file: "attention-please.mp3", len: 157.48, side: "Killer" },
+  { title: "Shoot Then Go",    file: "shoot-then-go.mp3",    len: 183.46, side: "Killer" },
+  { title: "Musician",         file: "musician.mp3",         len: 156.66, side: "Killer" },
+  { title: "Hairography",      file: "hairography.mp3",      len: 171.68, side: "Killer" },
+  { title: "I Made It",        file: "i-made-it.mp3",        len: 171.72, side: "Killer" },
+  { title: "Lucky",            file: "lucky.mp3",            len: 240.95, side: "Killer" },
+  { title: "Sincerely Carrie", file: "sincerely-carrie.mp3", len: 141.69, side: "Pretty" },
+  { title: "Worked",           file: "worked.mp3",           len: 170.73, side: "Pretty" },
+  { title: "Anne",             file: "anne.mp3",             len: 209.55, side: "Pretty", cover: "anne.jpg" }
+].map(s => ({ ...s, src: "media/pk/" + s.file, cover: "media/pk/" + (s.cover || (s.side === "Killer" ? "killer.jpg" : "pretty.jpg")) }));
+
+// ---------- The stations ----------
+// Each station plays its songs shuffled. Everyone gets the same shuffle, so everyone hears the
+// same song at the same time. After every song has played once, it reshuffles.
 const STATIONS = {
   vintage: {
-    big: "Vintage", script: "radio", presents: "Finn Shapiro presents", gazette: "The Vintage Times",
+    name: "Finn Shapiro Radio", big: "Finn Shapiro", script: "radio", presents: "Vintage, on the air", gazette: "The Vintage Times",
     station: "Vintage · FM", plate: "Finn Shapiro · Model V", album: "Vintage",
     tagline: "Everyone hears the same song at the same time. Turn the knob to hear what's on air right now.",
-    cover: "media/vintage/cover.jpg", dial: ["88", "92", "96", "100", "104", "108"], folder: "media/vintage/", covers: "media/vintage/covers/",
-    start: Date.UTC(2026, 0, 1),           // the moment track 1 first played (keeps everyone in sync)
-    tracks: [   // album order; each song has its own cover in media/vintage/covers/
-      { title: "Countdown",            file: "countdown.mp3",          len: 227.90, cover: "countdown.jpg" },
-      { title: "Party",                file: "party.mp3",              len: 175.35, cover: "party.jpg" },
-      { title: "Funny",                file: "funny.mp3",              len: 161.30, cover: "funny.jpg" },
-      { title: "Revenge",              file: "revenge.mp3",            len: 211.74, cover: "revenge.jpg" },
-      { title: "Catch Me",             file: "catch-me.mp3",           len: 197.20, cover: "catch-me.jpg" },
-      { title: "In Repair",            file: "in-repair.mp3",          len: 195.56, cover: "in-repair.jpg" },
-      { title: "Winner",               file: "winner.mp3",             len: 172.57, cover: "winner.jpg" },
-      { title: "Pretty Little Eyes",   file: "pretty-little-eyes.mp3", len: 190.53, cover: "pretty-little-eyes.jpg" },
-      { title: "W4tch U Di3",          file: "w4tch-u-di3.mp3",        len: 151.57, cover: "w4tch-u-di3.jpg" },
-      { title: "Mirror",               file: "mirror.mp3",             len: 168.35, cover: "mirror.jpg" },
-      { title: "Exotic",               file: "exotic.mp3",             len: 161.70, cover: "exotic.jpg" },
-      { title: "Kissmarks (Blame Me)", file: "kissmarks.mp3",          len: 169.40, cover: "kissmarks.jpg" }
-    ]
+    cover: "media/vintage/cover.jpg", dial: ["88", "92", "96", "100", "104", "108"],
+    start: Date.UTC(2026, 0, 1), seed: 1926,
+    tracks: VINTAGE_SONGS
   },
   pk: {
-    big: "PK", script: "radio", presents: "Vintage signed off. Now broadcasting", gazette: "Pretty Killer Listings",
+    name: "PK Radio", big: "PK", script: "radio", presents: "Vintage signed off. Now broadcasting", gazette: "Pretty Killer Listings",
     station: "PK · FM", plate: "Pretty Killer", album: "Pretty Killer",
-    tagline: "Pretty Killer is on the air. Everyone hears the same song at the same time.",
-    cover: "media/pk/cover.jpg", dial: ["P", "R", "E", "T", "T", "Y"], folder: "media/pk/", covers: "media/pk/",
-    start: SWITCH_AT,                      // PK starts on track 1 right at the switch
-    tracks: [
-      { title: "PK",               file: "pk.mp3",               len: 166.75 },
-      { title: "Sincerely Carrie", file: "sincerely-carrie.mp3", len: 141.69 },
-      { title: "Attention Please", file: "attention-please.mp3", len: 157.48 },
-      { title: "Shoot Then Go",    file: "shoot-then-go.mp3",    len: 183.46 },
-      { title: "Musician",         file: "musician.mp3",         len: 156.66 },
-      { title: "Hairography",      file: "hairography.mp3",      len: 171.68 },
-      { title: "I Made It",        file: "i-made-it.mp3",        len: 171.72 },
-      { title: "Lucky",            file: "lucky.mp3",            len: 240.95 },
-      { title: "Worked",           file: "worked.mp3",           len: 170.73 },
-      { title: "Anne",             file: "anne.mp3",             len: 209.55, cover: "anne.jpg" }
-    ]
+    tagline: "Pretty, Killer and Vintage, all shuffled. Everyone hears the same song at the same time.",
+    cover: "media/pk/cover.jpg", dial: ["P", "R", "E", "T", "T", "Y"],
+    start: SWITCH_AT, seed: 2027,
+    firstSong: "PK",                       // the very first song after the switch
+    tracks: [...PK_SONGS, ...VINTAGE_SONGS]
   }
 };
 
@@ -441,30 +451,76 @@ const audio = $("#audio");
 const root = document.documentElement;
 let override = null;      // "vintage" / "pk" while testing (type vintage, pk or auto)
 let listening = false;
-let current = null;       // { key, i }
+let current = null;       // { key, n, k }
 
 const stationKey = () => override || (Date.now() >= SWITCH_AT ? "pk" : "vintage");
 const fmt = s => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" })[c]);
 
-// Which song is on air at time t, and how far into it (seconds).
-function onAir(key, t = Date.now()){
-  const st = STATIONS[key];
-  const total = st.tracks.reduce((a, x) => a + x.len, 0);
-  let pos = ((t - st.start) / 1000) % total;
-  if (pos < 0) pos += total;
-  for (let i = 0; i < st.tracks.length; i++){
-    if (pos < st.tracks[i].len) return { i, offset: pos };
-    pos -= st.tracks[i].len;
+// ---------- Synced shuffle ----------
+// The same "random" order for everyone: it comes from the loop number, not from Math.random().
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function shuffled(key, n){
+  const st = STATIONS[key], r = rng(st.seed * 100003 + n * 7919);
+  const o = st.tracks.map((_, i) => i);
+  for (let i = o.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+  if (n === 0 && st.firstSong){             // PK Radio opens with "PK"
+    const f = st.tracks.findIndex(t => t.title === st.firstSong);
+    o.splice(o.indexOf(f), 1); o.unshift(f);
   }
-  return { i: 0, offset: 0 };
+  return o;
+}
+const orders = {};
+function orderFor(key, n){                  // the play order (track numbers) for loop n
+  const id = key + n;
+  if (orders[id]) return orders[id];
+  const o = shuffled(key, n);
+  if (n === 0) return (orders[id] = o);
+  // Songs from the end of the last shuffle don't come back right away: the first third of this
+  // shuffle only uses songs that weren't in the last third of the previous one.
+  // (This never moves the last third of a shuffle, so the previous one's ending stays the same.)
+  const T = Math.floor(o.length / 3);
+  const prev = shuffled(key, n - 1), tail = new Set(prev.slice(-T));
+  const head = [], rest = [];
+  for (const x of o) (head.length < T && !tail.has(x) ? head : rest).push(x);
+  return (orders[id] = head.concat(rest));
+}
+const loopLen = key => STATIONS[key].tracks.reduce((a, x) => a + x.len, 0);
+
+// What's on air at time t: which loop (n), which spot in that loop (k), which song (i), how far in (offset).
+function onAir(key, t = Date.now()){
+  const st = STATIONS[key], total = loopLen(key);
+  const pos = Math.max(0, (t - st.start) / 1000);
+  const n = Math.floor(pos / total);
+  let rest = pos - n * total;
+  const o = orderFor(key, n);
+  for (let k = 0; k < o.length; k++){
+    const len = st.tracks[o[k]].len;
+    if (rest < len) return { n, k, i: o[k], offset: rest };
+    rest -= len;
+  }
+  return { n, k: 0, i: o[0], offset: 0 };
+}
+
+// The next `count` songs from now (the first one is on air), with when each starts.
+function upcoming(key, count){
+  const st = STATIONS[key], now = Date.now(), air = onAir(key, now);
+  const out = [];
+  let n = air.n, k = air.k, t = now - air.offset * 1000;
+  while (out.length < count){
+    const o = orderFor(key, n), tr = st.tracks[o[k]];
+    out.push({ tr, at: t, live: out.length === 0 });
+    t += tr.len * 1000;
+    if (++k >= o.length){ k = 0; n++; }
+  }
+  return out;
 }
 
 function applyStation(key){
   const st = STATIONS[key];
   root.dataset.station = key;
-  document.title = key === "pk" ? "PK Radio" : "Vintage Radio";
-  $("#logo").setAttribute("aria-label", document.title);
+  document.title = st.name;
+  $("#logo").setAttribute("aria-label", st.name);
   $("#logoBig").textContent = st.big;
   $("#logoScript").textContent = st.script;
   $("#presents").textContent = st.presents;
@@ -476,8 +532,7 @@ function applyStation(key){
   setCover(st.cover);
 }
 
-// the song's own cover (or the album cover); if it's missing, show a "PK" tile instead
-const coverOf = (st, tr) => tr && tr.cover ? st.covers + tr.cover : st.cover;
+// the song's cover; if it's missing, show a "PK" tile instead
 function setCover(src){
   const img = $("#cover"), tile = $("#coverTile");
   if (img.dataset.src === src) return;
@@ -489,22 +544,14 @@ function setCover(src){
 }
 
 function renderSchedule(key){
-  const st = STATIONS[key];
-  const now = Date.now();
-  const air = onAir(key, now);
-  let t = now - air.offset * 1000;          // when each song next starts, in the viewer's own time
-  const startAt = [];
-  for (let k = 0; k < st.tracks.length; k++){
-    const j = (air.i + k) % st.tracks.length;
-    startAt[j] = t;
-    t += st.tracks[j].len * 1000;
-  }
+  const list = upcoming(key, 12);
   const clock = ms => new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  $("#sched").innerHTML = st.tracks.map((x, j) => `<li class="${j === air.i ? "live" : ""}">
+  const showSide = key === "pk";
+  $("#sched").innerHTML = list.map((x, j) => `<li class="${x.live ? "live" : ""}">
     <span class="n">${String(j + 1).padStart(2, "0")}</span>
-    <img class="thumb" src="${esc(coverOf(st, x))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-    <span class="t">${esc(x.title)}</span><span class="dots"></span>
-    <span class="when">${j === air.i ? "On air now" : clock(startAt[j])}</span></li>`).join("");
+    <img class="thumb" src="${esc(x.tr.cover)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+    <span class="t">${esc(x.tr.title)}${showSide ? ` <small class="side">${esc(x.tr.side)}</small>` : ""}</span><span class="dots"></span>
+    <span class="when">${x.live ? "On air now" : clock(x.at)}</span></li>`).join("");
   $("#today").textContent = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
 
@@ -518,26 +565,27 @@ function tick(){
   const st = STATIONS[key];
   const air = onAir(key);
   const tr = st.tracks[air.i];
-  if (!current || current.key !== key || current.i !== air.i){
-    current = { key, i: air.i };
-    const nxt = st.tracks[(air.i + 1) % st.tracks.length].title;
+  if (!current || current.key !== key || current.n !== air.n || current.k !== air.k){
+    current = { key, n: air.n, k: air.k };
+    const list = upcoming(key, 2);
     $("#title").textContent = tr.title;
     $("#tOn").textContent = tr.title;
-    $("#next").textContent = nxt;
+    $("#next").textContent = list[1].tr.title;
+    $("#station").textContent = key === "pk" ? `${tr.side} · PK FM` : st.station;
     $("#tEnd").textContent = fmt(tr.len);
-    setCover(coverOf(st, tr));
+    setCover(tr.cover);
     const c = key === "vintage" && COLORS[tr.file];
     ["--song-accent", "--song-glow", "--song-tint"].forEach((v, n) => c ? root.style.setProperty(v, c[n]) : root.style.removeProperty(v));
     renderSchedule(key);
-    $("#needle").style.left = (4 + air.i / (st.tracks.length - 1) * 92) + "%";
+    $("#needle").style.left = (4 + air.k / (st.tracks.length - 1) * 92) + "%";
     if ("mediaSession" in navigator){
       navigator.mediaSession.metadata = new MediaMetadata({
         title: tr.title, artist: "Finn Shapiro", album: st.album,
-        artwork: [{ src: new URL(coverOf(st, tr), location.href).href, sizes: "600x600", type: "image/jpeg" }]
+        artwork: [{ src: new URL(tr.cover, location.href).href, sizes: "600x600", type: "image/jpeg" }]
       });
     }
     // a new song is on air: play it (this is also how one song rolls into the next)
-    if (listening && audio.dataset.file !== st.folder + tr.file) play();
+    if (listening && audio.dataset.file !== tr.src) play();
   }
   $("#prog").style.width = (air.offset / tr.len * 100) + "%";
   $("#tNow").textContent = fmt(air.offset);
@@ -548,13 +596,13 @@ function play(){
   const key = stationKey();
   const st = STATIONS[key];
   const air = onAir(key);
-  const src = st.folder + st.tracks[air.i].file;
+  const src = st.tracks[air.i].src;
   audio.dataset.file = src;
   audio.src = src;
   audio.preload = "auto";
   audio.addEventListener("loadedmetadata", () => {
     const live = onAir(key);                // recalc: loading takes a moment
-    if (live.i === air.i) audio.currentTime = live.offset;
+    if (live.n === air.n && live.k === air.k) audio.currentTime = live.offset;
   }, { once: true });
   audio.play().catch(() => {});
 }
@@ -563,7 +611,7 @@ function play(){
 setInterval(() => {
   if (!listening || audio.paused || !audio.duration) return;
   const key = stationKey(), air = onAir(key);
-  if (audio.dataset.file === STATIONS[key].folder + STATIONS[key].tracks[air.i].file && Math.abs(audio.currentTime - air.offset) > 4)
+  if (audio.dataset.file === STATIONS[key].tracks[air.i].src && Math.abs(audio.currentTime - air.offset) > 4)
     audio.currentTime = air.offset;
 }, 15000);
 
